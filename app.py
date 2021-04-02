@@ -35,13 +35,12 @@ def index():
 def create():
   # get_json fetches the body 
   desc = request.get_json()['desc']
-  print(desc)
   error = False
   todo = {}  
   try:
     if desc:
       # in the transient stage
-      temp = Todo(description=desc)
+      temp = Todo(description=desc, list_id=1)
       # in the pending stage
       db.session.add(temp)
       # flushed, and committed to the database
