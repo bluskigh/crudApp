@@ -275,4 +275,33 @@ class Teacher(db.Model):
   school_id = db.Column(db.Integer, <BLANK>)
 a) db.ForeignKey('schools.id')
 
+====
+Modeling Relationships
 
+One to many
+- "a class has many students" 
+- a teacher has many students 
+
+Many to many
+- "a school teaches many subjects, and a subject is taught in many schools"
+
+One to one
+- "an account has one user"
+- "a passports belongs to a person"
+
+q)Match One-to-one, many-to-many, one-to-one: 
+1) A passport belongs to a person
+2) An account has one user
+3) A school teaches many subjects, and a subject is taught in many schools
+4) A class has many students
+5) A teacher has many students
+a) 1=one-to-one, 2=one-to-one, 3=many-to-many, 4=one-to-many, 5=one-to-many
+
+to create a many-to-many model, create a assoction table
+order_items = db.Table('order_items', db.Column(..))
+
+in child 
+db.relationship('Product', secondary=order_items, backref...)
+
+in parent table
+relationship('child', secondary=assocation_table)

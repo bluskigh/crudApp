@@ -32,3 +32,8 @@ li {
 ul {
   padding: 0;
 }
+
+.selected_list {
+  color: white;
+  background: black; 
+}

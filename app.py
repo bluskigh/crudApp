@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, jsonify, abort
+from flask import Flask, render_template, request, redirect, jsonify, abort, url_for
 from flask_migrate import Migrate 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -29,18 +29,24 @@ class Todo(db.Model):
 
 @app.route('/')
 def index():
-  return render_template('index.html', data=db.session.query(Todo).order_by('id').all())
+  return redirect(url_for('get_list_todos', list_id=1))
+
+@app.route('/lists/<list_id>')
+def get_list_todos(list_id):
+  lists = db.session.query(List).all()
+  return render_template('index.html', data=db.session.query(Todo).filter_by(list_id=list_id).order_by('id').all(), id=list_id, lists=lists, name=db.session.query(List).get(list_id).name)
 
 @app.route('/todos/create', methods=['POST'])
 def create():
   # get_json fetches the body 
   desc = request.get_json()['desc']
+  id = request.get_json()['id']
   error = False
   todo = {}  
   try:
     if desc:
       # in the transient stage
-      temp = Todo(description=desc, list_id=1)
+      temp = Todo(description=desc, list_id=id)
       # in the pending stage
       db.session.add(temp)
       # flushed, and committed to the database
