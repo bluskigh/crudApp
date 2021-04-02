@@ -1,0 +1,278 @@
+CRUD = Create, Read, Update, Delete
+
+q) for each CRUD operation can you identify the corressponding SQL command?
+a) Create = INSERT, Read = SELECT, Update = UPDATE, Delete = DELETE
+
+q) for each CRUD operation, there's also a corresspnding command in the SQLAlchemy ORM. Can you match them?
+a) Create = db.session.add(user1), Read = User.query.all(), Update = user1.foo = 'new value', Delete = db.session.delete(user1)
+
+What you should know by the end of this section: 
+"Model View Controller" MVC pattern
+Migrations
+Modeling Relationships
+Implementing Search 
+
+Flask processes html files through a templating engine called Jinja, and replaces an Jinja syntax with certain Jinja commands.
+ex: {% for d in date %} ... {% endfor %}
+
+====
+MVC = Model View Controller
+- modern pattern for architecting web applications 
+- describes 3 layers of application we are developing
+
+Model = manage data and business logic
+Views = handle display & representation logic
+Controllers = routes commands to models and views, contains control logic
+
+q) Handles display and representation logic (MVC):
+a) the views layer
+
+q) manages data and business logic (mvc):
+a) the models layer
+
+q) routes commands to models and views (mvc):
+a) the controllers layer 
+
+q) Match: 
+1) <h1> My Todo App </h1>
+2) Todo.query.all()
+3) render_template('...')
+Data, views, controllers, models
+a) 1=views, 2=models, 3=controllers 
+
+Example of using the MVC model, "adding a new todo"
+In the VIEW we are going to accept user input, which is going to send user input to the controller, and the controller is going to use a model to manipulate models using user input (Creating a record)
+
+MVC Development: how we'd add create-to-do item functinoality
+- On the view: implement an HTML form
+- On the controller: retrieve the user's input, and manipulate models
+- On the models: create a record in our database, and return the newly created to-do item to the controller
+- On the controller: take the newly created to-do item, and decide how to update the view with it.
+---- model interations occur within the controller
+
+q) To add functionality for creating-to-do items, what are the things we'd develop on the controller laye ? Check all that apply.
+a) Tell the todo model to create a todo item
+   Direct how the view should update upon creating a new todo item
+   Accept user input from a request
+
+request.data = gets any json that is being passed as a body to the request.
+
+the POST submission
+- send of an HTTP POST request to the route /create with a request body
+- the request body stringifies the key-value pairs of fields from the form (as part of the name attribute) along with their values
+
+the GET submission
+- sends off a GET request with a URL query parameters that appends the form data to the URL
+- ideal for smaller form submissions
+
+q) Should you use GET with longer form submissions?
+a) No, POST is preferred when using longer form submissions (query parameters can be at max 2048 characters)
+
+q) Match: 1)Request to /create with a request body foo=bar, 2)request to /create?foo=bar (a POST from submission, a GET from submission)
+a) 1) a POST from submission, 2) a GET from submission 
+
+XMLHttpRequest makes so much more sense now!
+
+var xttp = new XMLHttpRequest()
+const desc = ...;
+// opening a connection, since its using TCP and TCP requires that a connection between two hosts be connected(unlike UDP).
+xhttp.open('GET', '..../create?description='+description);
+xhttp.send();
+xhttp.onReadyStateChange = function() {
+  if (this.readyState === 4 && this.status === 200) {
+    // on successful response
+    console.log(xhttp.responseText);
+  }
+};
+
+fetch('../where', {
+  body: JSON.stringify({
+    'description': 'some description here'
+  }),
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+expire_on_commit = on default is true, all instances will be fully expired after each commit(), so that attribute/object acces subsequent to a completed transaction will load from the most recent database state.
+
+==== Data migration
+What is a migration?
+- a schema migration is a file tha tkeep track of changes to our database schema (structure of our database)
+- think of them as git commits
+- offer version control on our data schema
+
+Migrations
+- deal with how we manage modifications to our data schema, over time.
+
+What is the point of migrations?
+- mistakes to our database schema very are very expensive to make, so the ability to roll back changes and testing changes before we make themis important (a lot like git) 
+
+We can upgrade our database schema by applying migrations
+We can roll back our database schema to a former version by reverting migrations that we applied
+
+q) Doing a git commit for a Git version conotrl system on files is similar to ___ for a version control system(using migrations) on our database.
+a) applying a migration (a schema upgrade)
+
+Migrations are typically stored as local files in the app
+
+example of a migration folder
+migrations/
+  add_tables_0001.py
+  add_column_to_todos_0002.py
+  remove_column_to_todos_0003.py
+ 
+Migration command line scripts
+- migrate: creating a migration script template to fill out; generating a migration file on changes to be made
+- upgrade: applying migrations that hadn't been applied yet (upgrading our database)
+- downgrade: rolling back applied migrations that were problematic ("downgrading" our database)
+
+Mirgation library for flask + sqlalchemy
+- Flask-Migrate = our migration manager for mgirating SQLAlchemy-based database changes
+- Flask-Script lets us run migration scripts we defined form the terminal
+
+----------------------
+What does a simple migration look like when not using FLask-Migrate?
+
+--in app.py
+db.create_all()
+--modify our models
+class Todo(db.Model):
+  completed = db.Column(...) <-added col
+--Drop existing tables
+dropdb todoapp && createdb todoapp
+
+--Recreate tables with the newly modified models
+db.craete_all()
+
+Why is the above code not great?
+- we lost any existing data in our old tables
+- creating and re-creating entire tables when we just want to add a col (process heavy, no bueno)
+    
+What does Flask-Migrate do for us?
+- auto detects changes from the old version and new version of the SQLAlchemy models
+- create a migration script that resolves differences between the old and new versions
+- gives the fine-grain control to change existing tables
+
+q) What is hte library that FLask-Migrate uses underneath for running migration?
+a) Alembic (lightweight database migration tool for usage with SQLAlchemy for python) 
+
+q) True/False Flask-Migrate auto detects changes our database models?
+a) False, it autodetects changes in our SQLAlchemy models, but we still have to manually run the migrations ourselves (using FLask-Script underneath)
+
+q) Migrations are: 
+a) physical files typically stored in our local repository that captures sets of changes to our database schema
+
+q) Flask-Script is
+a) an essential library for running migrations from Flask-Migrate, Flask-Migrate manages migrations, flask-script lets us run them, we need Flask-Script in order to aply the mgirations that we defined using Flask-Migrate.
+
+Aside: Flask-Migrate is an extension that used Alembic under the hood 
+
+flask db init
+- create initial migrate folder
+- creates folders (migration, versions which stores all of the migration scripts for us) 
+
+flask db migrate
+- detects the model changes to be made, and creates a migration file with upgrade and downgrade logic set up
+
+flask db upgrade
+- runs the ugprade command in the migration file to apply the migration 
+
+flask db downgrade 
+
+====
+Updating a todo item
+
+in SQL:
+UPDATE table_name
+SET column1 = value1, col2 = value2
+WHERE condition;
+
+SQLAlchemy ORM
+user = User.query.get(some_id)
+user.name = 'Some new name'
+db.session.commit()
+
+app.route("somewhere/<id>")
+def index(id):
+### available in the parameters
+
+====
+
+db.relationship
+- provides and configures a mapped relationship between two models
+ex:
+class SomeParent(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(50), nullable=False)
+  children = db.relationship('SomeChild', backref=some_parent')
+
+#####
+db.relationship(name of child class, custom property name of the parent object)
+#####
+
+child1 = SomeChild(name='Monke')
+child1.some_parent <- returns the parent object that belongs to the child
+
+db.relationship also allows you to configure when joined assets should be loaded
+
+Why is it important to care about when we load parents?
+- joins are expensive, we should not have the user idling, we should make joins happen at a time where the UX doesn't negatively impact the experience too much. 
+
+====
+Lazy Loading vs Eager Loading
+
+Lazy Loading
+- load when needed
+- in our case: load needed joined data only as needed
+- default in SQLAlchemy
+- PRO: no init wait time. Load only what you need.
+- CON: produces a join SQL call every time there is a request for a joined asset.
+
+Eager Loading
+- load all needed at once
+- in our case: load all needed joined data objects, all at once
+- PRO: reduces further queries to the database,
+- CON: slow start to application
+
+## use with db.relationship parameters
+lazy='select' <- same as lazy=True
+lazy='joined' <- eager loading
+
+db.relationship
+- allows SQLAlchemy to identify relationships between model
+- links relationships with backrefs
+- configures relationship dynamic between parents and children
+-- db.relationship does not set foreign keys for us
+
+for db.column, it provides an option:
+  db.ForeignKey
+  - to specify a foreign key constraint japs to the primary key in the foreign table
+db.ForeignKey('(parent table name).(parent primary key column name)')
+example:
+db.ForeignKey('some_parents.id')
+
+q)True/False: db.relationship sets up foreign keys
+a) we need to specify the foreign keys on the child mode, EXPLICITLY
+
+q) On which model do we define each of the following? 
+1) db.relationship
+2) db.ForeignKey
+a) 1 = Parent Model, 2 = Child Model 
+
+q) db.ForeignKey is passed into...
+a) db.Column
+
+q) Fill in the <BLANK> to set up the foreign key constraint between these two models:
+
+class School(db.Model):
+  __tablename__ = 'schools'
+  id = db.Column(db.Integer, primar_key=True)
+  # ...
+class Teacher(db.Model):
+  __tablename__ = 'teachers'
+  name = #...
+  school_id = db.Column(db.Integer, <BLANK>)
+a) db.ForeignKey('schools.id')
+
+

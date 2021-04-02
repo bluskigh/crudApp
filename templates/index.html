@@ -1,0 +1,131 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for("static", filename='css/index.css') }}">
+    <title>Document</title>
+</head>
+<body>
+  <main>
+    <h1>Todo CRUD app</h1>
+    <ul>
+      {% if data|length %}
+      {% for item in data %}
+      <div class="todo">
+        <input type="checkbox" onclick="check(this)" name="{{item.id}}" {% if item.completed %} checked {%endif%}>
+        <li
+        {% if item.completed %}
+        class="checked"
+        {% endif %}
+        >{{ item.description}}</li>
+        <button id="remove" onclick="remove(this)">X</button>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p>No current items to show</p>
+      {% endif %}
+    </ul>
+
+    <input type="text" name="desc" id="descInput" placeholder="description" required>
+    <button type="submit" id="addButton">Add</button>
+
+    <button id="getTodos">Get Todos</button>
+  </main>
+
+  <script>
+  const ul = document.querySelector("ul");
+  const addButton = document.querySelector("#addButton");
+  const descInput = document.querySelector("#descInput");
+  addButton.addEventListener("click", function() {
+    if (descInput.value.length == 0) {
+      e.preventDefault();
+      alert("Please provide a valid value to the description input");
+      return; // prevent the rest of the code from running
+    }
+
+    fetch("/todos/create", {
+      method: "POST",
+      body: JSON.stringify({
+        desc: descInput.value
+      }), 
+      headers: new Headers({
+        "Content-Type": "application/json"
+      })
+    })
+    .then(async (r) => { 
+      try {
+        r = await r.json();
+        if (r.result) {
+          const container = document.createElement("div");
+          container.setAttribute("class", "todo");
+          const temp = document.createElement("li");
+          const checkTemp = document.createElement("input");
+          checkTemp.setAttribute("type", "checkbox");
+          checkTemp.setAttribute("name", r.result.id);
+          checkTemp.setAttribute("onclick", "check(this)");
+          const removeButton = document.createElement("button");
+          removeButton.setAttribute("onclick", "remove(this)");
+          removeButton.innerText = 'X';
+          temp.innerText = descInput.value;
+          container.appendChild(checkTemp);
+          container.appendChild(temp);
+          container.appendChild(removeButton);
+          ul.appendChild(container);
+        } else {
+          alert("could not add todo");
+        }
+      } catch(e) {
+        console.error(e);
+      }
+    })
+  });
+
+  const getTodosButton = document.querySelector("#getTodos");
+  getTodosButton.addEventListener("click", () => {
+    fetch("/todos")
+    .then(async (r) => await r.json())
+    .then((r) => {console.log(r)})
+    .catch((e) => {console.error(e)})
+  });
+
+  function check (obj) {
+    console.log(obj.getAttribute('name'));
+    fetch("/todos/check", {
+      method: "POST",
+      body: JSON.stringify({
+        id: obj.getAttribute("name")
+      }),
+      headers: new Headers({
+        "Content-Type": "application/json"
+      })
+    })
+    .then(async r => await r.json())
+    .then((r) => {
+      if (r.result) {
+        obj.nextElementSibling.classList.toggle("checked")
+      } else {
+        alert("could not update the todo")
+      }
+    })
+    .catch((e)=>console.log(e))
+  };
+
+  function remove(obj) {
+    fetch("/todos/" + obj.previousElementSibling.previousElementSibling.getAttribute("name") + "/remove")
+    .then(async (r) => await r.json())
+    .then((r) => {
+      if (r.result) {
+        // remove the todo
+        obj.parentElement.parentElement.removeChild(obj.parentElement);
+      } else {
+        alert("could not remove the todo");
+      }
+    })
+    .catch((e) => {
+      console.log(e);
+    })
+  }
+  </script>
+</body>
+</html>
